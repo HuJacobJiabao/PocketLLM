@@ -1,17 +1,23 @@
 # dependencies
-/node_modules
+node_modules/
+**/node_modules/
 /.pnp
 .pnp.js
 
 # testing
 /coverage
+coverage/
 
 # next.js
 /.next/
 /out/
+.next/
+out/
 
 # production
 /build
+build/
+dist/
 
 # misc
 .DS_Store
@@ -42,6 +48,12 @@ __pycache__/
 env/
 venv/
 ENV/
+*.egg-info/
+
+# Models (too large for git)
+models/*.gguf
+models/*.bin
+models/*.safetensors
 
 # IDE
 .vscode/
