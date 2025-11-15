@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     MODEL_N_GPU_LAYERS: int = 0  # GPU layers (0 = CPU only)
     MODEL_TEMPERATURE: float = 0.7
     MODEL_TOP_P: float = 0.95
-    MODEL_MAX_TOKENS: int = 512
+    MODEL_MAX_TOKENS: int = 200  # Reduced for more concise responses
 
     # Cache settings
     CACHE_TTL_SECONDS: int = 3600  # 1 hour

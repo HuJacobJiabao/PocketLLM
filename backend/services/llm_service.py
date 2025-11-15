@@ -66,7 +66,8 @@ class LLMEngine:
                 temperature=temperature or settings.MODEL_TEMPERATURE,
                 top_p=settings.MODEL_TOP_P,
                 echo=False,
-                stream=stream
+                stream=stream,
+                stop=["</s>", "<|user|>", "<|system|>"]  # Stop tokens for TinyLlama-Chat format
             )
 
             if stream:
