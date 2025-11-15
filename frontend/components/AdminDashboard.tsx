@@ -37,8 +37,12 @@ interface CacheStats {
 interface ModelInfo {
   model_loaded: boolean
   model_path: string
-  context_size: number
-  threads: number
+  n_ctx: number
+  n_threads: number
+  n_gpu_layers: number
+  temperature: number
+  top_p: number
+  max_tokens: number
 }
 
 export default function AdminDashboard() {
@@ -56,13 +60,13 @@ export default function AdminDashboard() {
         fetchClient.get<SystemMetrics>('/api/admin/metrics'),
         fetchClient.get<CacheStats>('/api/admin/cache/stats'),
         fetchClient.get<ModelInfo>('/api/admin/model/info'),
-        fetchClient.get<{ count: number }>('/api/admin/sessions/count'),
+        fetchClient.get<{ total_sessions: number; total_users: number }>('/api/admin/sessions/count'),
       ])
 
       setMetrics(metricsData)
       setCacheStats(cacheData)
       setModelInfo(modelData)
-      setSessionCount(sessionData.count)
+      setSessionCount(sessionData.total_sessions)
     } catch (error) {
       console.error('Failed to fetch admin data:', error)
     } finally {
@@ -260,7 +264,7 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Hit Rate</span>
               <span className="text-2xl font-bold text-blue-600">
-                {((cacheStats?.hit_rate || 0) * 100).toFixed(1)}%
+                {(cacheStats?.hit_rate || 0).toFixed(1)}%
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -318,14 +322,14 @@ export default function AdminDashboard() {
           <div className="p-4 bg-gray-50 rounded-lg">
             <p className="text-sm text-gray-600">Context Size</p>
             <p className="mt-2 text-lg font-semibold text-gray-900">
-              {modelInfo?.context_size || 0} tokens
+              {modelInfo?.n_ctx || 0} tokens
             </p>
           </div>
 
           <div className="p-4 bg-gray-50 rounded-lg">
             <p className="text-sm text-gray-600">CPU Threads</p>
             <p className="mt-2 text-lg font-semibold text-gray-900">
-              {modelInfo?.threads || 0} threads
+              {modelInfo?.n_threads || 0} threads
             </p>
           </div>
         </div>

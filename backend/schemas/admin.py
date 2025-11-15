@@ -10,6 +10,7 @@ class SystemMetrics(BaseModel):
     cache_hit_rate: float
     total_requests: int
     active_sessions: int
+    uptime_seconds: float
 
 
 class CacheFlushResponse(BaseModel):

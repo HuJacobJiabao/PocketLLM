@@ -25,12 +25,16 @@ class MonitoringService:
         # Cache hit rate
         cache_hit_rate = cache_stats.get("hit_rate", 0.0)
 
+        # Uptime
+        uptime_seconds = self.get_uptime()
+
         return SystemMetrics(
             cpu_usage=cpu_usage,
             memory_usage=memory_usage,
             cache_hit_rate=cache_hit_rate,
             total_requests=self.total_requests,
-            active_sessions=active_sessions
+            active_sessions=active_sessions,
+            uptime_seconds=uptime_seconds
         )
 
     def increment_request_count(self):
