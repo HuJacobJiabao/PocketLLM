@@ -61,24 +61,24 @@
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
-/* Smooth scrollbar */
+/* Smooth scrollbar - Aurora Blue Theme */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #F2F4F7;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #9333ea, #3b82f6);
+  background: #CBD5E1;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #7c3aed, #2563eb);
+  background: #4A90E2;
 }
 
 :root {

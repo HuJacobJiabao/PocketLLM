@@ -50,70 +50,63 @@ export default function InputBox({ onSend, isLoading }: InputBoxProps) {
   }
 
   return (
-    <div className="p-6 bg-white border-t border-gray-200 shadow-lg">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-end space-x-3">
-          <div className="flex-1 relative">
-            <textarea
-              value={value}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your message... ✨"
-              className="w-full resize-none border-2 border-gray-200 rounded-2xl px-5 py-3.5 pr-12 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 shadow-sm hover:shadow-md disabled:bg-gray-50 disabled:text-gray-400"
-              rows={3}
-              disabled={isLoading}
-            />
-            {value.trim() && !isLoading && (
-              <div className="absolute bottom-3 right-3 text-xs text-gray-400 bg-white px-2 py-1 rounded">
-                {value.length} chars
-              </div>
-            )}
-          </div>
+    <div style={{ borderTop: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="relative">
+          <textarea
+            value={value}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Message PocketLLM..."
+            className="w-full resize-none rounded-lg px-4 py-3 pr-12 focus:outline-none transition-all"
+            style={{
+              minHeight: '44px',
+              maxHeight: '200px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #CBD5E1',
+              color: '#1E293B',
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = '#4A90E2'
+              e.target.style.boxShadow = '0 0 0 1px #4A90E2'
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = '#CBD5E1'
+              e.target.style.boxShadow = 'none'
+            }}
+            rows={1}
+            disabled={isLoading}
+          />
           <button
             onClick={handleSubmit}
             disabled={isLoading || !value.trim()}
-            className={`px-6 py-3.5 rounded-2xl font-semibold transition-all duration-300 shadow-md ${
+            className="absolute right-2 bottom-2 p-2 rounded-md transition-colors"
+            style={
               isLoading || !value.trim()
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 hover:shadow-lg hover:scale-105'
-            }`}
+                ? { color: '#CBD5E1', cursor: 'not-allowed' }
+                : { color: '#4A90E2' }
+            }
+            onMouseEnter={(e) => {
+              if (!isLoading && value.trim()) {
+                e.currentTarget.style.backgroundColor = '#EAF3FF'
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+            }}
           >
             {isLoading ? (
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Sending...</span>
-              </div>
+              <div className="w-5 h-5 rounded-full animate-spin" style={{ border: '2px solid #CBD5E1', borderTopColor: '#4A90E2' }}></div>
             ) : (
-              <div className="flex items-center space-x-2">
-                <span>Send</span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-              </div>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
             )}
           </button>
         </div>
-        <div className="flex items-center justify-between mt-3 px-1">
-          <div className="flex items-center space-x-4 text-xs text-gray-500">
-            <span className="flex items-center space-x-1">
-              <kbd className="px-2 py-1 bg-gray-100 rounded border border-gray-300 font-mono">Enter</kbd>
-              <span>to send</span>
-            </span>
-            <span className="flex items-center space-x-1">
-              <kbd className="px-2 py-1 bg-gray-100 rounded border border-gray-300 font-mono">Shift+Enter</kbd>
-              <span>for new line</span>
-            </span>
-          </div>
-          {isLoading && (
-            <div className="flex items-center space-x-2 text-xs text-purple-600">
-              <div className="flex space-x-1">
-                <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-bounce"></div>
-                <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              </div>
-              <span className="font-medium">AI is thinking...</span>
-            </div>
-          )}
+        <div className="mt-2 flex items-center justify-between text-xs" style={{ color: '#64748B' }}>
+          <span>Press Enter to send, Shift+Enter for new line</span>
+          {isLoading && <span style={{ color: '#4A90E2' }}>Generating response...</span>}
         </div>
       </div>
     </div>

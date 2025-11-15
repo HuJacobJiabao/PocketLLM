@@ -42,49 +42,41 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 flex items-center justify-center p-4">
-      {/* Background decorations */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute top-40 left-40 w-80 h-80 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
-      </div>
-
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#F9FAFB' }}>
       {/* Login Card */}
-      <div className="relative w-full max-w-md">
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden animate-fade-in">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden animate-fade-in" style={{ border: '1px solid #E2E8F0' }}>
           {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-8 py-10 text-white text-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-white opacity-10"></div>
-            <div className="relative">
-              <div className="w-20 h-20 mx-auto mb-4 bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
-                <svg
-                  className="w-10 h-10"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                  />
-                </svg>
-              </div>
-              <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
-              <p className="text-purple-100">Sign in to PocketLLM Portal</p>
+          <div className="px-8 py-10 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#EAF3FF' }}>
+              <svg
+                className="w-8 h-8"
+                style={{ color: '#4A90E2' }}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                />
+              </svg>
             </div>
+            <h1 className="text-3xl font-bold mb-2" style={{ color: '#1E293B' }}>Welcome Back</h1>
+            <p style={{ color: '#64748B' }}>Sign in to PocketLLM</p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          <form onSubmit={handleSubmit} className="px-8 pb-8 space-y-5">
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg animate-slide-in-left">
+              <div className="p-4 rounded-lg animate-slide-in-left" style={{ backgroundColor: '#FEF2F2', borderLeft: '4px solid #EF4444' }}>
                 <div className="flex items-center">
                   <svg
-                    className="w-5 h-5 text-red-500 mr-3"
+                    className="w-5 h-5 mr-3"
+                    style={{ color: '#EF4444' }}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -96,88 +88,83 @@ export default function LoginPage() {
                       d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  <p className="text-sm text-red-700">{error}</p>
+                  <p className="text-sm" style={{ color: '#B91C1C' }}>{error}</p>
                 </div>
               </div>
             )}
 
             {/* Username Input */}
             <div>
-              <label htmlFor="username" className="block text-sm font-semibold text-gray-700 mb-2">
+              <label htmlFor="username" className="block text-sm font-medium mb-2" style={{ color: '#1E293B' }}>
                 Username
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg
-                    className="w-5 h-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
-                </div>
-                <input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300"
-                  placeholder="Enter your username"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg focus:outline-none transition-all"
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #CBD5E1',
+                  color: '#1E293B',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#4A90E2'
+                  e.target.style.boxShadow = '0 0 0 1px #4A90E2'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#CBD5E1'
+                  e.target.style.boxShadow = 'none'
+                }}
+                placeholder="Enter your username"
+                required
+                disabled={isLoading}
+              />
             </div>
 
             {/* Password Input */}
             <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium mb-2" style={{ color: '#1E293B' }}>
                 Password
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg
-                    className="w-5 h-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                    />
-                  </svg>
-                </div>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300"
-                  placeholder="Enter your password"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg focus:outline-none transition-all"
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #CBD5E1',
+                  color: '#1E293B',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#4A90E2'
+                  e.target.style.boxShadow = '0 0 0 1px #4A90E2'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#CBD5E1'
+                  e.target.style.boxShadow = 'none'
+                }}
+                placeholder="Enter your password"
+                required
+                disabled={isLoading}
+              />
             </div>
 
             {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold shadow-lg hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-xl hover:scale-105"
+              className="w-full py-3 text-white rounded-lg font-medium focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              style={{ backgroundColor: '#4A90E2' }}
+              onMouseEnter={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#3276C7')}
+              onMouseLeave={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#4A90E2')}
             >
               {isLoading ? (
                 <div className="flex items-center justify-center space-x-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-5 h-5 rounded-full animate-spin" style={{ border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white' }}></div>
                   <span>Signing in...</span>
                 </div>
               ) : (
@@ -186,19 +173,19 @@ export default function LoginPage() {
             </button>
 
             {/* Demo Credentials */}
-            <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl border border-purple-100">
-              <p className="text-xs font-semibold text-gray-700 mb-2">Demo Credentials:</p>
-              <div className="space-y-1 text-xs text-gray-600">
-                <p>👤 User: <code className="bg-white px-2 py-0.5 rounded font-mono">user1</code> / <code className="bg-white px-2 py-0.5 rounded font-mono">password123</code></p>
-                <p>👑 Admin: <code className="bg-white px-2 py-0.5 rounded font-mono">admin</code> / <code className="bg-white px-2 py-0.5 rounded font-mono">admin123</code></p>
+            <div className="mt-6 p-4 rounded-lg" style={{ backgroundColor: '#F1F6FF', border: '1px solid #D4E8FF' }}>
+              <p className="text-xs font-medium mb-2" style={{ color: '#1E293B' }}>Demo Credentials:</p>
+              <div className="space-y-1 text-xs" style={{ color: '#475569' }}>
+                <p>User: <code className="bg-white px-2 py-0.5 rounded font-mono" style={{ border: '1px solid #E2E8F0' }}>user1</code> / <code className="bg-white px-2 py-0.5 rounded font-mono" style={{ border: '1px solid #E2E8F0' }}>password123</code></p>
+                <p>Admin: <code className="bg-white px-2 py-0.5 rounded font-mono" style={{ border: '1px solid #E2E8F0' }}>admin</code> / <code className="bg-white px-2 py-0.5 rounded font-mono" style={{ border: '1px solid #E2E8F0' }}>admin123</code></p>
               </div>
             </div>
           </form>
         </div>
 
         {/* Footer */}
-        <p className="text-center mt-6 text-white text-sm">
-          Powered by <span className="font-semibold">PocketLLM</span> • Secure & Private
+        <p className="text-center mt-6 text-sm" style={{ color: '#64748B' }}>
+          Powered by <span className="font-semibold">PocketLLM</span>
         </p>
       </div>
     </div>

@@ -20,14 +20,14 @@ export default function NavigationBar() {
   const isActive = (path: string) => pathname === path
 
   return (
-    <nav className="bg-gradient-to-r from-purple-700 via-blue-700 to-indigo-700 text-white shadow-2xl backdrop-blur-sm">
-      <div className="container mx-auto px-4">
+    <nav style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }} className="shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo with Icon */}
-          <Link href="/" className="flex items-center space-x-3 group">
-            <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center group-hover:bg-opacity-30 transition-all duration-300 group-hover:scale-110">
+          {/* Logo */}
+          <Link href="/" className="flex items-center space-x-2 group">
+            <div style={{ backgroundColor: '#4A90E2' }} className="w-8 h-8 rounded-lg flex items-center justify-center group-hover:opacity-90 transition-opacity">
               <svg
-                className="w-6 h-6"
+                className="w-5 h-5 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -40,55 +40,52 @@ export default function NavigationBar() {
                 />
               </svg>
             </div>
-            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-100">
-              PocketLLM Portal
+            <span className="text-lg font-semibold" style={{ color: '#1E293B' }}>
+              PocketLLM
             </span>
           </Link>
 
           {/* Navigation Links */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1">
             {isAuthenticated ? (
               <>
                 <Link
                   href="/"
-                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
-                    isActive('/')
-                      ? 'bg-white bg-opacity-25 shadow-lg'
-                      : 'hover:bg-white hover:bg-opacity-10'
-                  }`}
+                  className="px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  style={isActive('/') ? { backgroundColor: '#EAF3FF', color: '#1E293B' } : { color: '#475569' }}
+                  onMouseEnter={(e) => !isActive('/') && (e.currentTarget.style.backgroundColor = '#F2F4F7')}
+                  onMouseLeave={(e) => !isActive('/') && (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
-                  💬 Chat
+                  Chat
                 </Link>
                 <Link
                   href="/history"
-                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
-                    isActive('/history')
-                      ? 'bg-white bg-opacity-25 shadow-lg'
-                      : 'hover:bg-white hover:bg-opacity-10'
-                  }`}
+                  className="px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  style={isActive('/history') ? { backgroundColor: '#EAF3FF', color: '#1E293B' } : { color: '#475569' }}
+                  onMouseEnter={(e) => !isActive('/history') && (e.currentTarget.style.backgroundColor = '#F2F4F7')}
+                  onMouseLeave={(e) => !isActive('/history') && (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
-                  📚 History
+                  History
                 </Link>
                 {user?.is_admin && (
                   <Link
                     href="/admin"
-                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
-                      isActive('/admin')
-                        ? 'bg-white bg-opacity-25 shadow-lg'
-                        : 'hover:bg-white hover:bg-opacity-10'
-                    }`}
+                    className="px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    style={isActive('/admin') ? { backgroundColor: '#EAF3FF', color: '#1E293B' } : { color: '#475569' }}
+                    onMouseEnter={(e) => !isActive('/admin') && (e.currentTarget.style.backgroundColor = '#F2F4F7')}
+                    onMouseLeave={(e) => !isActive('/admin') && (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
-                    ⚙️ Admin
+                    Admin
                   </Link>
                 )}
-                <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-white border-opacity-20">
-                  <div className="flex items-center space-x-2 bg-white bg-opacity-10 px-3 py-1.5 rounded-lg">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium">{user?.username}</span>
-                  </div>
+                <div className="flex items-center space-x-3 ml-6 pl-6" style={{ borderLeft: '1px solid #E2E8F0' }}>
+                  <span className="text-sm" style={{ color: '#475569' }}>{user?.username}</span>
                   <button
                     onClick={logout}
-                    className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg font-medium transition-all duration-300 hover:shadow-lg hover:scale-105"
+                    className="px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
+                    style={{ color: '#475569', border: '1px solid #CBD5E1', backgroundColor: '#FFFFFF' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F2F4F7'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFFFF'}
                   >
                     Logout
                   </button>
@@ -97,9 +94,12 @@ export default function NavigationBar() {
             ) : (
               <Link
                 href="/login"
-                className="px-6 py-2 bg-white text-purple-700 hover:bg-blue-50 rounded-lg font-medium transition-all duration-300 hover:shadow-lg hover:scale-105"
+                className="px-4 py-2 text-sm font-medium text-white rounded-md transition-colors"
+                style={{ backgroundColor: '#4A90E2' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3276C7'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4A90E2'}
               >
-                Login
+                Sign in
               </Link>
             )}
           </div>
