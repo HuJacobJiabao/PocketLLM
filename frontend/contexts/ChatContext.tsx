@@ -71,8 +71,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({
           prompt: content,
           session_id: sessionId || undefined,
-          max_tokens: 200,
-          temperature: 0.7,
         }),
       })
 
