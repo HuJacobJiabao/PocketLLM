@@ -24,12 +24,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body className="antialiased">
         <AuthProvider>
           <ChatProvider>
-            <div className="min-h-screen flex flex-col">
+            <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-blue-50">
               <NavigationBar />
-              <main className="flex-1">
+              <main className="flex-1 flex flex-col">
                 {children}
               </main>
             </div>
