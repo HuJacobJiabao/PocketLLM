@@ -1,16 +1,15 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react'
-import { WebSocketClient, WebSocketMessage } from '@/lib/wsClient'
+import { createContext, useContext, useState, ReactNode } from 'react'
 
 /**
  * ChatContext - Global Chat State
  *
  * Architecture Reference: HW3 Section 3.1.2 State Management
- * Architecture Reference: HW3 Section 3.2.2 WebSocket Support
+ * Architecture Reference: HW3 Section 3.2.2 Real-time Streaming (SSE through BFF)
  * - React Context API for chat state
- * - Manages messages and session via WebSocket
- * - Provides real-time chat operations
+ * - Manages messages and session via Server-Sent Events
+ * - Provides real-time chat operations through Next.js BFF layer
  */
 
 export interface Message {
@@ -24,7 +23,6 @@ interface ChatContextType {
   messages: Message[]
   sessionId: string | null
   isLoading: boolean
-  isConnected: boolean
   sendMessage: (content: string) => Promise<void>
   addMessage: (message: Message) => void
   clearMessages: () => void
@@ -37,90 +35,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<Message[]>([])
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [isConnected, setIsConnected] = useState(false)
-  const wsClientRef = useRef<WebSocketClient | null>(null)
-  const currentMessageIdRef = useRef<string | null>(null)
-
-  // Initialize WebSocket connection
-  useEffect(() => {
-    const token = localStorage.getItem('auth_token')
-    if (!token) return
-
-    // Get WebSocket URL from environment
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000/chat/ws'
-
-    const wsClient = new WebSocketClient(wsUrl, token)
-    wsClientRef.current = wsClient
-
-    // Connect to WebSocket
-    wsClient.connect().then(() => {
-      setIsConnected(true)
-      console.log('WebSocket connected')
-    }).catch((error) => {
-      console.error('WebSocket connection failed:', error)
-      setIsConnected(false)
-    })
-
-    // Handle incoming messages
-    const unsubscribe = wsClient.onMessage((message: WebSocketMessage) => {
-      if (message.type === 'start') {
-        // Update session ID
-        if (message.session_id && !sessionId) {
-          setSessionId(message.session_id)
-        }
-      } else if (message.type === 'token') {
-        // Append token to current message
-        if (message.content && currentMessageIdRef.current) {
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === currentMessageIdRef.current
-                ? { ...msg, content: msg.content + message.content }
-                : msg
-            )
-          )
-        }
-      } else if (message.type === 'done') {
-        // Message complete
-        setIsLoading(false)
-        currentMessageIdRef.current = null
-      } else if (message.type === 'error') {
-        // Handle error
-        console.error('WebSocket error:', message.message)
-        setMessages((prev) => {
-          const lastMessage = prev[prev.length - 1]
-          if (lastMessage && lastMessage.role === 'assistant' && !lastMessage.content) {
-            return prev.slice(0, -1).concat({
-              ...lastMessage,
-              content: `Error: ${message.message || 'Unknown error'}`,
-            })
-          }
-          return prev
-        })
-        setIsLoading(false)
-        currentMessageIdRef.current = null
-      }
-    })
-
-    // Handle connection close
-    const unsubscribeClose = wsClient.onClose(() => {
-      setIsConnected(false)
-      console.log('WebSocket disconnected')
-    })
-
-    // Cleanup on unmount
-    return () => {
-      unsubscribe()
-      unsubscribeClose()
-      wsClient.close()
-    }
-  }, []) // Empty dependency array - only run once on mount
 
   const sendMessage = async (content: string) => {
     if (!content.trim()) return
-    if (!wsClientRef.current || !wsClientRef.current.isConnected()) {
-      console.error('WebSocket is not connected')
-      return
-    }
 
     // Add user message immediately
     const userMessage: Message = {
@@ -129,31 +46,99 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       content,
       timestamp: new Date(),
     }
+
     setMessages((prev) => [...prev, userMessage])
     setIsLoading(true)
 
     try {
       // Create placeholder for assistant message
       const assistantMessageId = `msg-${Date.now()}`
-      currentMessageIdRef.current = assistantMessageId
       const assistantMessage: Message = {
         id: assistantMessageId,
         role: 'assistant',
         content: '',
         timestamp: new Date(),
       }
+
       setMessages((prev) => [...prev, assistantMessage])
 
-      // Send message via WebSocket
-      wsClientRef.current.sendMessage({
-        type: 'chat',
-        prompt: content,
-        session_id: sessionId || undefined,
-        max_tokens: 512,
-        temperature: 0.7,
+      // Call streaming endpoint through Next.js BFF layer
+      const response = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+        body: JSON.stringify({
+          prompt: content,
+          session_id: sessionId || undefined,
+        }),
       })
+
+      if (!response.ok) {
+        throw new Error('Failed to send message')
+      }
+
+      // Read streaming response (Server-Sent Events)
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+
+      if (!reader) {
+        throw new Error('No response body')
+      }
+
+      let buffer = ''
+      let fullContent = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+
+        // Process complete SSE messages
+        const lines = buffer.split('\n\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = JSON.parse(line.slice(6))
+
+            if (data.type === 'start') {
+              // Update session ID
+              if (data.session_id && !sessionId) {
+                setSessionId(data.session_id)
+              }
+            } else if (data.type === 'token') {
+              // Append token to message
+              fullContent += data.content
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === assistantMessageId
+                    ? { ...msg, content: fullContent }
+                    : msg
+                )
+              )
+            } else if (data.type === 'done') {
+              // Stream complete
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === assistantMessageId
+                    ? { ...msg, timestamp: new Date(data.timestamp) }
+                    : msg
+                )
+              )
+            } else if (data.type === 'error') {
+              throw new Error(data.message)
+            }
+          }
+        }
+      }
     } catch (error) {
       console.error('Send message error:', error)
+
+      // Update last message with error
       setMessages((prev) => {
         const lastMessage = prev[prev.length - 1]
         if (lastMessage && lastMessage.role === 'assistant' && !lastMessage.content) {
@@ -164,8 +149,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         }
         return prev
       })
+    } finally {
       setIsLoading(false)
-      currentMessageIdRef.current = null
     }
   }
 
@@ -182,7 +167,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     messages,
     sessionId,
     isLoading,
-    isConnected,
     sendMessage,
     addMessage,
     clearMessages,
