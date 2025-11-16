@@ -135,3 +135,68 @@ class AuthService:
             )
         finally:
             db.close()
+
+    def register_user(self, username: str, password: str) -> Optional[LoginResponse]:
+        """Register a new user."""
+        db = SessionLocal()
+        try:
+            # Check if username already exists
+            existing_user = db.query(UserModel).filter(UserModel.username == username).first()
+            if existing_user:
+                return None  # Username already taken
+
+            # Create new user
+            new_user = UserModel(
+                user_id=str(uuid.uuid4()),
+                username=username,
+                password_hash=self.get_password_hash(password),
+                is_admin=False  # New users are not admin by default
+            )
+            db.add(new_user)
+            db.commit()
+            db.refresh(new_user)
+
+            # Convert to schema
+            user_schema = UserSchema(
+                user_id=new_user.user_id,
+                username=new_user.username,
+                password_hash=new_user.password_hash,
+                is_admin=new_user.is_admin
+            )
+
+            # Auto-login: generate token
+            access_token = self.create_access_token(user_schema)
+            return LoginResponse(
+                access_token=access_token,
+                token_type="bearer",
+                user_id=user_schema.user_id,
+                username=user_schema.username,
+                is_admin=user_schema.is_admin
+            )
+        except Exception as e:
+            db.rollback()
+            return None
+        finally:
+            db.close()
+
+    def change_password(self, user_id: str, old_password: str, new_password: str) -> bool:
+        """Change user password."""
+        db = SessionLocal()
+        try:
+            user_model = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+            if not user_model:
+                return False
+
+            # Verify old password
+            if not self.verify_password(old_password, user_model.password_hash):
+                return False
+
+            # Update password
+            user_model.password_hash = self.get_password_hash(new_password)
+            db.commit()
+            return True
+        except Exception as e:
+            db.rollback()
+            return False
+        finally:
+            db.close()

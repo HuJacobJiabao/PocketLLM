@@ -292,15 +292,15 @@ export default function AdminDashboard() {
 
           <div className="flex items-center justify-center h-32">
             <div className="text-center">
-              <p className="text-6xl font-bold text-purple-600">{sessionCount}</p>
+              <p className="text-6xl font-bold" style={{ color: '#4A90E2' }}>{sessionCount}</p>
               <p className="mt-2 text-gray-600">Total Sessions</p>
             </div>
           </div>
 
-          <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg">
+          <div className="mt-6 p-4 rounded-lg" style={{ backgroundColor: '#EAF3FF' }}>
             <p className="text-sm text-gray-700">
-              💡 <span className="font-medium">Tip:</span> Sessions are stored in memory
-              and will be lost on restart.
+              💡 <span className="font-medium">Tip:</span> Sessions are persisted in SQLite database
+              and will survive restarts.
             </p>
           </div>
         </div>

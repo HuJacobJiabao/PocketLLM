@@ -27,6 +27,7 @@ interface ChatContextType {
   addMessage: (message: Message) => void
   clearMessages: () => void
   setSessionId: (id: string) => void
+  loadSession: (sessionId: string, messages: Message[]) => void
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined)
@@ -163,6 +164,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setSessionId(null)
   }
 
+  const loadSession = (newSessionId: string, newMessages: Message[]) => {
+    setSessionId(newSessionId)
+    setMessages(newMessages)
+  }
+
   const value: ChatContextType = {
     messages,
     sessionId,
@@ -171,6 +177,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     addMessage,
     clearMessages,
     setSessionId,
+    loadSession,
   }
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>

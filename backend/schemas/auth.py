@@ -32,3 +32,21 @@ class User(BaseModel):
     username: str
     password_hash: str
     is_admin: bool = False
+
+
+class RegisterRequest(BaseModel):
+    """Request schema for user registration."""
+    username: str
+    password: str
+
+
+class ChangePasswordRequest(BaseModel):
+    """Request schema for changing password."""
+    old_password: str
+    new_password: str
+
+
+class ChangePasswordResponse(BaseModel):
+    """Response schema for password change."""
+    success: bool
+    message: str

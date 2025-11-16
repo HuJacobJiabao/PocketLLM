@@ -1,42 +1,76 @@
 'use client'
 
 /**
- * Login Page
+ * Register Page
  *
- * Architecture Reference: HW3 Component Diagram - Login Page
- * - User authentication page
- * - Calls Next.js API Route for login
- * - Stores JWT token in localStorage
+ * User registration page with Aurora Blue theme.
+ * - Creates new user account
+ * - Auto-login after successful registration
+ * - Validates username (≥3 chars) and password (≥6 chars)
  */
 
 import { useState, FormEvent } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const { login } = useAuth()
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
+
+    // Frontend validation
+    if (username.length < 3) {
+      setError('Username must be at least 3 characters long')
+      return
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long')
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
+
     setIsLoading(true)
 
     try {
-      await login(username, password)
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      })
 
-      // Get redirect URL or default to home
-      const redirect = searchParams.get('redirect') || '/'
-      router.push(redirect)
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Registration failed')
+      }
+
+      // Store token and user info (auto-login)
+      localStorage.setItem('auth_token', data.access_token)
+      localStorage.setItem('user', JSON.stringify({
+        id: data.user_id,
+        username: data.username,
+        is_admin: data.is_admin,
+      }))
+
+      // Redirect to home page
+      router.push('/')
     } catch (err) {
-      setError((err as Error).message || 'Login failed. Please try again.')
+      setError((err as Error).message || 'Registration failed. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -44,7 +78,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#F9FAFB' }}>
-      {/* Login Card */}
+      {/* Register Card */}
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden animate-fade-in" style={{ border: '1px solid #E2E8F0' }}>
           {/* Header */}
@@ -61,12 +95,12 @@ export default function LoginPage() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                  d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
                 />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold mb-2" style={{ color: '#1E293B' }}>Welcome Back</h1>
-            <p style={{ color: '#64748B' }}>Sign in to PocketLLM</p>
+            <h1 className="text-3xl font-bold mb-2" style={{ color: '#1E293B' }}>Create Account</h1>
+            <p style={{ color: '#64748B' }}>Join PocketLLM today</p>
           </div>
 
           {/* Form */}
@@ -118,7 +152,7 @@ export default function LoginPage() {
                   e.target.style.borderColor = '#CBD5E1'
                   e.target.style.boxShadow = 'none'
                 }}
-                placeholder="Enter your username"
+                placeholder="Choose a username (min 3 characters)"
                 required
                 disabled={isLoading}
               />
@@ -148,7 +182,37 @@ export default function LoginPage() {
                   e.target.style.borderColor = '#CBD5E1'
                   e.target.style.boxShadow = 'none'
                 }}
-                placeholder="Enter your password"
+                placeholder="Choose a password (min 6 characters)"
+                required
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Confirm Password Input */}
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium mb-2" style={{ color: '#1E293B' }}>
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg focus:outline-none transition-all"
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #CBD5E1',
+                  color: '#1E293B',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#4A90E2'
+                  e.target.style.boxShadow = '0 0 0 1px #4A90E2'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#CBD5E1'
+                  e.target.style.boxShadow = 'none'
+                }}
+                placeholder="Confirm your password"
                 required
                 disabled={isLoading}
               />
@@ -166,28 +230,19 @@ export default function LoginPage() {
               {isLoading ? (
                 <div className="flex items-center justify-center space-x-2">
                   <div className="w-5 h-5 rounded-full animate-spin" style={{ border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white' }}></div>
-                  <span>Signing in...</span>
+                  <span>Creating account...</span>
                 </div>
               ) : (
-                <span>Sign In</span>
+                <span>Create Account</span>
               )}
             </button>
 
-            {/* Demo Credentials */}
-            <div className="mt-6 p-4 rounded-lg" style={{ backgroundColor: '#F1F6FF', border: '1px solid #D4E8FF' }}>
-              <p className="text-xs font-medium mb-2" style={{ color: '#1E293B' }}>Demo Credentials:</p>
-              <div className="space-y-1 text-xs" style={{ color: '#475569' }}>
-                <p>User: <code className="bg-white px-2 py-0.5 rounded font-mono" style={{ border: '1px solid #E2E8F0' }}>user1</code> / <code className="bg-white px-2 py-0.5 rounded font-mono" style={{ border: '1px solid #E2E8F0' }}>password123</code></p>
-                <p>Admin: <code className="bg-white px-2 py-0.5 rounded font-mono" style={{ border: '1px solid #E2E8F0' }}>admin</code> / <code className="bg-white px-2 py-0.5 rounded font-mono" style={{ border: '1px solid #E2E8F0' }}>admin123</code></p>
-              </div>
-            </div>
-
-            {/* Register Link */}
+            {/* Login Link */}
             <div className="text-center mt-4">
               <p className="text-sm" style={{ color: '#64748B' }}>
-                Don't have an account?{' '}
-                <Link href="/register" className="font-medium hover:underline" style={{ color: '#4A90E2' }}>
-                  Create account
+                Already have an account?{' '}
+                <Link href="/login" className="font-medium hover:underline" style={{ color: '#4A90E2' }}>
+                  Sign in
                 </Link>
               </p>
             </div>

@@ -67,6 +67,15 @@ export default function NavigationBar() {
                 >
                   History
                 </Link>
+                <Link
+                  href="/settings"
+                  className="px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  style={isActive('/settings') ? { backgroundColor: '#EAF3FF', color: '#1E293B' } : { color: '#475569' }}
+                  onMouseEnter={(e) => !isActive('/settings') && (e.currentTarget.style.backgroundColor = '#F2F4F7')}
+                  onMouseLeave={(e) => !isActive('/settings') && (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  Settings
+                </Link>
                 {user?.is_admin && (
                   <Link
                     href="/admin"
