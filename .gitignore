@@ -55,6 +55,12 @@ models/*.gguf
 models/*.bin
 models/*.safetensors
 
+# Database files
+*.db
+*.db-shm
+*.db-wal
+backend/data/
+
 # IDE
 .vscode/
 .idea/
