@@ -37,13 +37,13 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: Optional[str] = None
 
     # LLM Model
-    MODEL_PATH: str = "./models/tinyllama-1.1b-chat-q4.gguf"
-    MODEL_N_CTX: int = 2048  # Context window
-    MODEL_N_THREADS: int = 4  # CPU threads
+    MODEL_PATH: str = "./models/model.gguf"
+    MODEL_N_CTX: int = 4096
+    MODEL_N_THREADS: int = 4
     MODEL_N_GPU_LAYERS: int = 0  # GPU layers (0 = CPU only)
     MODEL_TEMPERATURE: float = 0.7
     MODEL_TOP_P: float = 0.95
-    MODEL_MAX_TOKENS: int = 512
+    MODEL_MAX_TOKENS: int = 1024
 
     # Cache settings
     CACHE_TTL_SECONDS: int = 3600  # 1 hour

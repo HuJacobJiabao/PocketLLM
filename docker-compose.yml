@@ -36,7 +36,6 @@ services:
       - "8000:8000"
     environment:
       - PYTHON_ENV=production
-      - MODEL_PATH=/app/models/tinyllama-1.1b-chat-q4.gguf
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - DATABASE_URL=sqlite:///./data/pocketllm.db

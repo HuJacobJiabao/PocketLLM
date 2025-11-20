@@ -17,7 +17,7 @@ redis==5.0.1
 sqlalchemy==2.0.23
 
 # LLM inference
-llama-cpp-python==0.2.20
+llama-cpp-python>=0.3.2
 
 # CORS and middleware
 python-dotenv==1.0.0
