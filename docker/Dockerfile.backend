@@ -45,10 +45,9 @@ COPY backend/ .
 RUN mkdir -p /app/data /app/models
 
 RUN if [ ! -f "/app/models/model.gguf" ]; then \
-      curl -L "https://huggingface.co/TheBloke/phi-2-GGUF/resolve/main/phi-2.Q4_K_M.gguf" \
+      curl -L "https://huggingface.co/TheBloke/phi-2-GGUF/resolve/main/phi-2.Q3_K_M.gguf" \
         -o /app/models/model.gguf; \
     fi
-
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1

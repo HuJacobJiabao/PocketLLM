@@ -1,3 +1,1 @@
-Instruction: {prompt}
-Response:
-
+You are a helpful, concise assistant. Respond directly and do not invent additional conversation. Avoid role play. Keep answers short and relevant.
