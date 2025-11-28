@@ -22,7 +22,7 @@ class CacheManager:
         self.use_redis = False
 
         # In-memory cache fallback
-        self.memory_cache: Dict[str, tuple[str, datetime]] = {}  # key -> (value, expiry)
+        self.memory_cache: Dict[str, tuple[str, datetime]] = {}
 
         # Try to connect to Redis if available
         if settings.ENABLE_CACHE and REDIS_AVAILABLE:
@@ -46,7 +46,7 @@ class CacheManager:
         else:
             print("⚠ Redis not installed. Using in-memory cache fallback.")
 
-        self.enabled = settings.ENABLE_CACHE  # Always enabled with fallback
+        self.enabled = settings.ENABLE_CACHE
 
         # Statistics
         self.hits = 0
@@ -54,7 +54,16 @@ class CacheManager:
 
     def _generate_cache_key(self, prompt: str, **kwargs) -> str:
         """Generate cache key from prompt and parameters."""
-        # Include relevant parameters in cache key
+        # Handle both string prompts and pre-built cache keys
+        if isinstance(prompt, str) and prompt.startswith('{'):
+            # Already a JSON cache key
+            try:
+                json.loads(prompt)  # Validate it's valid JSON
+                return f"llm:{hashlib.sha256(prompt.encode()).hexdigest()}"
+            except json.JSONDecodeError:
+                pass
+        
+        # Build cache key from parameters
         cache_data = {
             "prompt": prompt,
             "temperature": kwargs.get("temperature", settings.MODEL_TEMPERATURE),
@@ -75,56 +84,65 @@ class CacheManager:
         if not self.enabled:
             return None
 
-        cache_key = self._generate_cache_key(prompt, **kwargs)
+        try:
+            cache_key = self._generate_cache_key(prompt, **kwargs)
 
-        # Try Redis first
-        if self.use_redis and self.redis_client:
-            try:
-                cached_value = self.redis_client.get(cache_key)
-                if cached_value:
+            # Try Redis first
+            if self.use_redis and self.redis_client:
+                try:
+                    cached_value = self.redis_client.get(cache_key)
+                    if cached_value:
+                        self.hits += 1
+                        return cached_value
+                    else:
+                        self.misses += 1
+                        return None
+                except Exception as e:
+                    print(f"[Cache] Redis get error: {e}")
+                    # Fall through to memory cache
+
+            # Use in-memory cache
+            self._clean_expired_entries()
+            if cache_key in self.memory_cache:
+                value, expiry = self.memory_cache[cache_key]
+                if expiry > datetime.utcnow():
                     self.hits += 1
-                    return cached_value
+                    return value
                 else:
-                    self.misses += 1
-                    return None
-            except Exception as e:
-                print(f"Redis get error: {e}")
-                # Fall through to memory cache
+                    # Expired
+                    del self.memory_cache[cache_key]
 
-        # Use in-memory cache
-        self._clean_expired_entries()
-        if cache_key in self.memory_cache:
-            value, expiry = self.memory_cache[cache_key]
-            if expiry > datetime.utcnow():
-                self.hits += 1
-                return value
-            else:
-                # Expired
-                del self.memory_cache[cache_key]
-
-        self.misses += 1
-        return None
+            self.misses += 1
+            return None
+        except Exception as e:
+            print(f"[Cache] Get error: {type(e).__name__}: {str(e)}")
+            self.misses += 1
+            return None
 
     def set(self, prompt: str, response: str, **kwargs) -> bool:
         """Cache a response for a prompt."""
         if not self.enabled:
             return False
 
-        cache_key = self._generate_cache_key(prompt, **kwargs)
+        try:
+            cache_key = self._generate_cache_key(prompt, **kwargs)
 
-        # Try Redis first
-        if self.use_redis and self.redis_client:
-            try:
-                self.redis_client.setex(cache_key, self.ttl, response)
-                return True
-            except Exception as e:
-                print(f"Redis set error: {e}")
-                # Fall through to memory cache
+            # Try Redis first
+            if self.use_redis and self.redis_client:
+                try:
+                    self.redis_client.setex(cache_key, self.ttl, response)
+                    return True
+                except Exception as e:
+                    print(f"[Cache] Redis set error: {e}")
+                    # Fall through to memory cache
 
-        # Use in-memory cache
-        expiry = datetime.utcnow() + timedelta(seconds=self.ttl)
-        self.memory_cache[cache_key] = (response, expiry)
-        return True
+            # Use in-memory cache
+            expiry = datetime.utcnow() + timedelta(seconds=self.ttl)
+            self.memory_cache[cache_key] = (response, expiry)
+            return True
+        except Exception as e:
+            print(f"[Cache] Set error: {type(e).__name__}: {str(e)}")
+            return False
 
     def flush(self) -> int:
         """Flush all cache entries (admin operation)."""
@@ -140,7 +158,7 @@ class CacheManager:
                 if keys:
                     count = self.redis_client.delete(*keys)
             except Exception as e:
-                print(f"Redis flush error: {e}")
+                print(f"[Cache] Redis flush error: {e}")
 
         # Flush in-memory cache
         memory_count = len(self.memory_cache)

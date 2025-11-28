@@ -1,17 +1,6 @@
 'use client'
 import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react'
 
-/**
- * ChatContext - Global Chat State with Stop Functionality
- *
- * Architecture Reference: HW3 Section 3.1.2 State Management
- * Architecture Reference: HW3 Section 3.2.2 Real-time Streaming (SSE through BFF)
- * - React Context API for chat state
- * - Manages messages and session via Server-Sent Events
- * - Provides real-time chat operations through Next.js BFF layer
- * - Supports aborting streaming responses
- */
-
 export interface Message {
   id: string
   role: 'user' | 'assistant'
@@ -38,7 +27,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   
-  // AbortController ref to cancel streaming requests
   const abortControllerRef = useRef<AbortController | null>(null)
 
   const stopGenerating = () => {
@@ -52,7 +40,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const sendMessage = async (content: string) => {
     if (!content.trim()) return
 
-    // Add user message immediately
+    console.log('[ChatContext] sendMessage called with:', { content, sessionId })
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -63,12 +52,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setMessages((prev) => [...prev, userMessage])
     setIsLoading(true)
 
-    // Create new AbortController for this request
     const abortController = new AbortController()
     abortControllerRef.current = abortController
 
     try {
-      // Create placeholder for assistant message
       const assistantMessageId = `msg-${Date.now()}`
       const assistantMessage: Message = {
         id: assistantMessageId,
@@ -79,25 +66,31 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       setMessages((prev) => [...prev, assistantMessage])
 
-      // Call streaming endpoint through Next.js BFF layer
+      const token = localStorage.getItem('auth_token')
+      console.log('[ChatContext] Auth token:', token ? `${token.substring(0, 20)}...` : 'MISSING')
+
       const response = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           prompt: content,
           session_id: sessionId || undefined,
         }),
-        signal: abortController.signal, // Pass abort signal
+        signal: abortController.signal,
       })
 
+      console.log('[ChatContext] Stream response status:', response.status)
+      console.log('[ChatContext] Stream response headers:', Object.fromEntries(response.headers.entries()))
+
       if (!response.ok) {
-        throw new Error('Failed to send message')
+        const errorText = await response.text()
+        console.error('[ChatContext] Stream failed:', { status: response.status, body: errorText })
+        throw new Error(`Failed to send message: ${response.status} ${errorText}`)
       }
 
-      // Read streaming response (Server-Sent Events)
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
 
@@ -107,58 +100,67 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       let buffer = ''
       let fullContent = ''
+      let eventCount = 0
 
       while (true) {
         const { done, value } = await reader.read()
 
-        if (done) break
+        if (done) {
+          console.log('[ChatContext] Stream complete. Total events:', eventCount)
+          break
+        }
 
         buffer += decoder.decode(value, { stream: true })
 
-        // Process complete SSE messages
         const lines = buffer.split('\n\n')
         buffer = lines.pop() || ''
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            const data = JSON.parse(line.slice(6))
+            eventCount++
+            const dataStr = line.slice(6)
+            console.log('[ChatContext] Received event:', dataStr.substring(0, 100))
+            
+            try {
+              const data = JSON.parse(dataStr)
 
-            if (data.type === 'start') {
-              // Update session ID
-              if (data.session_id && !sessionId) {
-                setSessionId(data.session_id)
+              if (data.type === 'start') {
+                console.log('[ChatContext] Stream started:', data)
+                if (data.session_id && !sessionId) {
+                  setSessionId(data.session_id)
+                }
+              } else if (data.type === 'token') {
+                fullContent += data.content
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === assistantMessageId
+                      ? { ...msg, content: fullContent }
+                      : msg
+                  )
+                )
+              } else if (data.type === 'done') {
+                console.log('[ChatContext] Stream done:', data)
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === assistantMessageId
+                      ? { ...msg, timestamp: new Date(data.timestamp) }
+                      : msg
+                  )
+                )
+              } else if (data.type === 'error') {
+                console.error('[ChatContext] Server error:', data.message)
+                throw new Error(data.message)
               }
-            } else if (data.type === 'token') {
-              // Append token to message
-              fullContent += data.content
-              setMessages((prev) =>
-                prev.map((msg) =>
-                  msg.id === assistantMessageId
-                    ? { ...msg, content: fullContent }
-                    : msg
-                )
-              )
-            } else if (data.type === 'done') {
-              // Stream complete
-              setMessages((prev) =>
-                prev.map((msg) =>
-                  msg.id === assistantMessageId
-                    ? { ...msg, timestamp: new Date(data.timestamp) }
-                    : msg
-                )
-              )
-            } else if (data.type === 'error') {
-              throw new Error(data.message)
+            } catch (parseError) {
+              console.error('[ChatContext] Failed to parse event:', { dataStr, parseError })
             }
           }
         }
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        // Request was aborted by user
-        console.log('Generation stopped by user')
+        console.log('[ChatContext] Generation stopped by user')
         
-        // Update last message to indicate it was stopped
         setMessages((prev) => {
           const lastMessage = prev[prev.length - 1]
           if (lastMessage && lastMessage.role === 'assistant') {
@@ -170,9 +172,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           return prev
         })
       } else {
-        console.error('Send message error:', error)
+        console.error('[ChatContext] Send message error:', {
+          error,
+          name: error instanceof Error ? error.name : 'unknown',
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        })
 
-        // Update last message with error
         setMessages((prev) => {
           const lastMessage = prev[prev.length - 1]
           if (lastMessage && lastMessage.role === 'assistant' && !lastMessage.content) {
@@ -197,15 +203,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const clearMessages = () => {
     setMessages([])
     setSessionId(null)
-    stopGenerating() // Stop any ongoing generation
+    stopGenerating()
   }
 
-  // Clear chat state and any local persistence on global logout
   const clearAllChatState = () => {
     try {
       setMessages([])
       setSessionId(null)
-      // Remove any chat-related localStorage keys if present
       try {
         localStorage.removeItem('current_session')
         localStorage.removeItem('messages')
