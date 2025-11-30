@@ -10,6 +10,7 @@
  * - Validates admin role for admin routes
  *
  * Protected Routes:
+ * - / - Chat page (requires authentication)
  * - /admin/* - Admin dashboard (requires admin role)
  * - /api/admin/* - Admin API endpoints (requires admin role)
  * - /history - Chat history (requires authentication)
@@ -57,14 +58,15 @@ export function middleware(request: NextRequest) {
   const tokenFromCookie = request.cookies.get('auth_token')?.value
   const token = tokenFromHeader || tokenFromCookie
 
-  // Check if route requires authentication
-  const isAdminRoute = pathname.startsWith('/admin') || pathname.startsWith('/api/admin')
-  const isProtectedRoute = isAdminRoute || pathname.startsWith('/history')
-
-  // Public routes - allow access
-  if (!isProtectedRoute) {
+  // Public routes - allow access without authentication
+  const publicRoutes = ['/login', '/register']
+  if (publicRoutes.includes(pathname)) {
     return NextResponse.next()
   }
+
+  // Check if route requires authentication
+  const isAdminRoute = pathname.startsWith('/admin') || pathname.startsWith('/api/admin')
+  const isProtectedRoute = pathname === '/' || isAdminRoute || pathname.startsWith('/history')
 
   // Protected routes - verify token
   if (!token) {
@@ -119,8 +121,9 @@ export function middleware(request: NextRequest) {
 // Configure which routes use this middleware
 export const config = {
   matcher: [
-    '/admin/:path*',
-    '/api/admin/:path*',
-    '/history/:path*',
+    '/',                    // Chat page (home)
+    '/admin/:path*',        // Admin dashboard
+    '/api/admin/:path*',    // Admin API endpoints
+    '/history/:path*',      // Chat history
   ],
 }

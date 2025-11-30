@@ -37,8 +37,12 @@ export default function InputBox({ onSend, onStop, isLoading }: InputBoxProps) {
   const handleSubmit = async () => {
     if (!value.trim() || isLoading) return
 
-    await onSend(value)
+    // Save the message content before clearing
+    const messageContent = value.trim()
+    // Clear input immediately for better UX
     clear()
+    // Send the message
+    await onSend(messageContent)
   }
 
   const handleStop = () => {
