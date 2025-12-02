@@ -127,11 +127,14 @@ Given resource constraints (4 vCPUs, 16 GB RAM), we prioritized the following ca
    - JWT-based authentication
    - Role-based access control (Admin/User)
    - Secure password hashing with bcrypt
+   - Auto-redirect unauthenticated users to login page
    - **Rationale**: Essential for multi-user system
 
 2. **Chat Interface with LLM**
    - Real-time streaming responses via WebSocket
-   - Conversation context management
+   - Intelligent context management with token estimation
+   - System prompt protection (system prompt always preserved, history auto-truncated when context exceeds)
+   - Input field clears immediately after sending for better UX
    - Message persistence
    - **Rationale**: Primary user-facing feature
 
@@ -139,6 +142,7 @@ Given resource constraints (4 vCPUs, 16 GB RAM), we prioritized the following ca
    - TinyLlama-1.1B-Chat (4-bit quantized)
    - CPU-optimized inference via llama.cpp
    - Context window: 2048 tokens
+   - Enhanced system prompt with clearer instructions emphasizing accuracy, clarity, and professional tone
    - **Rationale**: Core functionality within resource limits
 
 4. **Response Caching**
@@ -255,6 +259,8 @@ Given resource constraints (4 vCPUs, 16 GB RAM), we prioritized the following ca
 │  │  ┌────────────────────────────────────────┐    │        │
 │  │  │ Model Inference Service                 │    │        │
 │  │  │  • Prompt formatting                    │    │        │
+│  │  │  • Smart context management with token estimation │    │        │
+│  │  │  • System prompt protection (always preserved) │    │        │
 │  │  │  • LLM inference orchestration          │    │        │
 │  │  │  • Response streaming                   │    │        │
 │  │  │  • Cache integration                    │    │        │
@@ -301,14 +307,18 @@ Given resource constraints (4 vCPUs, 16 GB RAM), we prioritized the following ca
   - User interface rendering (SSR + client-side hydration)
   - Client-side state management (React Context API)
   - Form validation and user input handling
+  - Input field clears immediately after sending for better UX
   - WebSocket client for streaming responses
   - Backend-for-Frontend (BFF) API routes
+  - Middleware-based authentication and route protection (auto-redirect to login)
 
 #### Application Layer (Business Logic)
 - **Technology**: FastAPI + Python 3.11
 - **Responsibilities**:
   - Authentication and authorization (JWT)
   - LLM inference orchestration
+  - Intelligent context management with token estimation
+  - System prompt protection (always preserved, history auto-truncated)
   - Response caching logic
   - Session and conversation management
   - System monitoring and telemetry
@@ -594,6 +604,8 @@ Given resource constraints (4 vCPUs, 16 GB RAM), we prioritized the following ca
 
 3. **Context Window Management**
    - 2048 token context window (not full 4096)
+   - Smart truncation that always preserves system prompt, truncates history instead
+   - Token estimation for intelligent context management
    - Reduces memory usage during inference
    - Sufficient for most chat conversations
 
@@ -684,6 +696,7 @@ Given resource constraints (4 vCPUs, 16 GB RAM), we prioritized the following ca
 - bcrypt password hashing (cost factor: 12)
 - Token expiration: 30 minutes
 - Secure token storage (HTTP-only cookies in production)
+- Auto-redirect unauthenticated users to login page (middleware-based route protection)
 
 **Authorization**:
 - Role-based access control (Admin/User)

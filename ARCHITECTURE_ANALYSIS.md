@@ -74,9 +74,9 @@ frontend/
 - ✅ Handles authentication on server-side
 
 ### Deviations
-⚠️ **Minor**: Middleware file exists but is not actively used for auth (auth handled in Context + API routes)
-- **Reason**: React Context API provides simpler state management for this scale
-- **Impact**: No architectural violation; implementation choice within Next.js flexibility
+✅ **Updated**: Middleware is now actively used for authentication and route protection
+- **Implementation**: Next.js middleware validates JWT tokens and redirects unauthenticated users to login page
+- **Impact**: Improved security with automatic route protection
 
 ---
 
@@ -276,6 +276,7 @@ Redis Cache (Data Layer)
 - ✅ Bcrypt password hashing (cost factor 12)
 - ✅ CORS configuration for frontend origin
 - ✅ Role-based access control (is_admin flag)
+- ✅ Auto-redirect unauthenticated users to login page (middleware-based)
 
 ---
 
@@ -299,6 +300,8 @@ Redis Cache (Data Layer)
 - Temperature: 0.7
 - Top-p: 0.95
 - Max tokens: 512
+- **Smart Context Management**: System prompt always preserved, history auto-truncated when context exceeds
+- **Enhanced System Prompt**: Rewritten with clearer instructions emphasizing accuracy, clarity, and professional tone
 
 **Model Location:**
 - ✅ Embedded in Docker image at `/app/models/`
@@ -381,7 +384,7 @@ class CacheManager:
 | **State Management** | Context API | React Context API | ✅ Compliant |
 | **Deployment** | Docker | Docker Compose | ✅ Compliant |
 | **Resource Limits** | ≤4 vCPUs, ≤16 GB | 4.0 vCPUs, 16 GB | ✅ Compliant |
-| **Middleware** | Next.js middleware | Exists but unused | ⚠️ Minor deviation |
+| **Middleware** | Next.js middleware | Active for auth & route protection | ✅ Compliant |
 | **Message Broker** | Optional | Not implemented | ⚠️ Optional feature |
 | **Telemetry DB** | Optional | On-demand metrics | ⚠️ Optimization choice |
 
@@ -389,9 +392,8 @@ class CacheManager:
 ✅ **FULLY COMPLIANT** with designed architecture
 
 **Minor Deviations:**
-1. **Middleware not actively used**: Auth handled in Context + API routes (simpler for this scale)
-2. **No message broker**: Marked as optional in design, not required for MVP
-3. **No separate telemetry DB**: On-demand metrics more resource-efficient
+1. **No message broker**: Marked as optional in design, not required for MVP
+2. **No separate telemetry DB**: On-demand metrics more resource-efficient
 
 **Impact of Deviations:** None - all deviations are within acceptable architectural flexibility and represent implementation optimizations.
 

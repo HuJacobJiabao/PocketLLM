@@ -674,14 +674,30 @@ def load_system_prompt(path="prompt.txt") -> str:
         return "You are a helpful AI assistant."
 ```
 
+**Actual System Prompt** (from `backend/prompt.txt`):
+```
+<|start_header_id|>system<|end_header_id|>
+You are an AI assistant designed to provide accurate, concise, and well-structured answers. 
+Prioritize clarity and factual correctness. Organize information in a logical, easy-to-understand way. 
+Adapt your explanations to the user's level and avoid unnecessary verbosity or ambiguity. 
+Maintain a professional, neutral, and helpful tone at all times. 
+If the user's request is unclear, ask one brief clarifying question. 
+If you are unsure about something, express uncertainty instead of inventing information.
+```
+
 #### Rationale
 - **Flexibility**: Admins can customize system prompt without code changes
 - **Fallback**: Works even if file missing
-- **Current State**: File doesn't exist, using default prompt
+- **Current State**: Enhanced system prompt with clearer instructions emphasizing accuracy, clarity, and professional tone
 
 **Code Location**: [backend/utils/prompt_builder.py:4-15](backend/utils/prompt_builder.py#L4-L15)
 
-**Current Behavior**: Using default "You are a helpful AI assistant." prompt
+**Current Behavior**: Using enhanced system prompt that emphasizes:
+- Accuracy and factual correctness
+- Clarity and well-structured answers
+- Professional, neutral, and helpful tone
+- Asking clarifying questions when needed
+- Expressing uncertainty instead of inventing information
 
 ---
 

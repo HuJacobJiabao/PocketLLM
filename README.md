@@ -93,16 +93,20 @@ Designed to run within strict resource limits:
   - JWT-based authentication with secure token handling
   - Role-based access control (Admin/User)
   - Session management with automatic token refresh
+  - Auto-redirect unauthenticated users to login page
 
 - **Chat Interface**
   - Real-time streaming responses (WebSocket)
-  - Conversation context management
+  - Intelligent context management with token estimation
+  - System prompt protection (system prompt always preserved, history auto-truncated when context exceeds)
+  - Input field clears immediately after sending for better UX
   - Message history persistence
 
 - **LLM Inference**
   - Meta-Llama-3-8B-Instruct (3-bit quantized, ~3.5GB model)
   - CPU-optimized inference via llama.cpp
   - Temperature: 0.0, Top-P: 1.0, Max Tokens: 1024, Context: 4096
+  - Enhanced system prompt with clearer instructions emphasizing accuracy, clarity, and professional tone
 
 - **Response Caching**
   - Redis-based LRU cache (256MB limit)
