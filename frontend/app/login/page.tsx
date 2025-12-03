@@ -34,7 +34,10 @@ export default function LoginPage() {
 
       // Get redirect URL or default to home
       const redirect = searchParams.get('redirect') || '/'
-      router.push(redirect)
+
+      // Use window.location.href instead of router.push to ensure
+      // the cookie is fully set before the middleware checks it
+      window.location.href = redirect
     } catch (err) {
       setError((err as Error).message || 'Login failed. Please try again.')
     } finally {

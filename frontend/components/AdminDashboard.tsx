@@ -82,10 +82,10 @@ export default function AdminDashboard() {
 
     setFlushing(true)
     try {
-      const result = await fetchClient.post<{ message: string; items_removed: number }>(
+      const result = await fetchClient.post<{ success: boolean; message: string; entries_flushed: number }>(
         '/api/admin/cache/flush'
       )
-      alert(`Cache flushed successfully! ${result.items_removed} items removed.`)
+      alert(`Cache flushed successfully! ${result.entries_flushed} items removed.`)
       // Refresh stats
       await fetchAdminData()
     } catch (error) {

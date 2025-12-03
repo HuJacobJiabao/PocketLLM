@@ -165,6 +165,10 @@ class CacheManager:
         self.memory_cache.clear()
         count += memory_count
 
+        # Reset hit/miss counters so stats reflect a clean slate
+        self.hits = 0
+        self.misses = 0
+
         return count
 
     def get_stats(self) -> dict:
