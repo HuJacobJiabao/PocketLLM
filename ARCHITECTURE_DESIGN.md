@@ -1,5 +1,5 @@
 # PocketLLM Portal - Architectural Design Document
-## Prescriptive Architecture (Updated from HW3)
+## Prescriptive Architecture
 
 **Course**: USC CSCI 578 - Software Architecture (Fall 2025)
 **Team**: Team #11
