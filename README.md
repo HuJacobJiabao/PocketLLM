@@ -29,14 +29,14 @@ This project implements a **Layered + Client-Server hybrid architecture** as des
 ┌─────────────────────────────────────────────────────────────┐
 │                         Client Browser                       │
 └────────────────────────┬────────────────────────────────────┘
-                         │ HTTP/WebSocket
+                         │ HTTP + SSE
 ┌────────────────────────▼────────────────────────────────────┐
 │              Frontend (Next.js 14 + React 18)                │
 │  • Server-Side Rendering (SSR)                               │
 │  • Backend-for-Frontend (BFF) API Routes                     │
 │  • Context API State Management                              │
 └────────────────────────┬────────────────────────────────────┘
-                         │ REST API
+                         │ REST API + SSE stream
 ┌────────────────────────▼────────────────────────────────────┐
 │              Backend (FastAPI + Python)                      │
 │  • Authentication Service (JWT)                              │
@@ -80,9 +80,9 @@ Designed to run within strict resource limits:
 
 | Service  | CPU Limit | Memory Limit | Notes                          |
 |----------|-----------|--------------|--------------------------------|
-| Backend  | 2.5 cores | 14 GB        | LLM inference + API services   |
-| Frontend | 1.0 core  | 1.5 GB       | Next.js SSR + static assets    |
-| Redis    | 0.5 cores | 512 MB       | Response caching (optional)    |
+| Backend  | 3.0 cores | 14 GB        | LLM inference + API services   |
+| Frontend | 0.5 core  | 1.5 GB       | Next.js SSR + static assets    |
+| Redis    | 0.5 core  | 512 MB       | Response caching (optional)    |
 | **Total**| **4.0**   | **16 GB**    | Exactly at project limits ✅   |
 
 ## Features
@@ -96,9 +96,9 @@ Designed to run within strict resource limits:
   - Auto-redirect unauthenticated users to login page
 
 - **Chat Interface**
-  - Real-time streaming responses (WebSocket)
-  - Intelligent context management with token estimation
-  - System prompt protection (system prompt always preserved, history auto-truncated when context exceeds)
+  - Real-time streaming responses (Server-Sent Events over POST `/chat/stream`)
+  - Conversation history trimmed to the last few messages (3 sync / 5 stream)
+  - System prompt protection (system prompt always preserved)
   - Input field clears immediately after sending for better UX
   - Message history persistence
 
@@ -133,7 +133,7 @@ Designed to run within strict resource limits:
 
 ### Optional Features (Partially Implemented ⭕)
 
-- **WebSocket Support**: Implemented for streaming responses
+- **WebSocket Support**: Not used; streaming implemented via SSE
 - **Model Management**: Basic model loading and configuration
 - **Rate Limiting**: Configured but not actively enforced
 
@@ -144,7 +144,7 @@ Designed to run within strict resource limits:
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS (custom design)
 - **State Management**: React Context API
-- **HTTP Client**: Fetch API / WebSocket
+- **HTTP Client**: Fetch API (includes streaming SSE parsing)
 
 ### Backend
 - **Framework**: FastAPI 0.104+
@@ -187,7 +187,7 @@ Choose your preferred deployment method:
 
 ```bash
 # 1. Clone the repository
-git clone <repository-url>
+git clone https://github.com/HuJacobJiabao/PocketLLM.git
 cd PocketLLM
 
 # 2. Build and start all services (Docker will auto-download the model)
@@ -209,7 +209,7 @@ docker-compose logs -f backend
 
 **Default credentials:**
 - Admin: `admin` / `admin123`
-- User: `user` / `user123`
+- User: `user1` / `password123`
 
 **Model information (Docker):**
 - **Name**: Meta-Llama-3-8B-Instruct
@@ -292,7 +292,7 @@ npm install
 # Create environment file
 cat > .env.local << EOF
 NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_WS_URL=ws://localhost:8000
+BACKEND_API_URL=http://localhost:8000
 EOF
 
 # Run development server
@@ -433,53 +433,41 @@ For detailed Docker deployment instructions, see [DOCKER_DEPLOYMENT.md](./DOCKER
 
 ```
 PocketLLM/
-├── frontend/                # Next.js application
-│   ├── app/                # App Router pages
-│   │   ├── page.tsx        # Chat interface (/)
-│   │   ├── login/          # Login page
-│   │   ├── history/        # Conversation history
-│   │   ├── admin/          # Admin dashboard
-│   │   └── api/            # BFF API routes
-│   ├── components/         # Reusable React components
-│   ├── contexts/           # React Context providers
-│   │   ├── AuthContext.tsx # Authentication state
-│   │   └── ChatContext.tsx # Chat state management
-│   ├── hooks/              # Custom React hooks
-│   ├── lib/                # Utilities and helpers
-│   └── public/             # Static assets
+├── frontend/                   # Next.js application (App Router)
+│   ├── app/                    # Pages and API routes (BFF)
+│   │   ├── api/chat/route.ts   # REST proxy to backend /chat
+│   │   ├── api/chat/stream/... # SSE proxy to backend /chat/stream
+│   │   ├── api/health/route.ts # Health check
+│   │   ├── page.tsx            # Chat UI
+│   │   ├── login/              # Login page
+│   │   ├── history/            # Conversation history
+│   │   └── admin/              # Admin dashboard
+│   ├── components/             # Reusable components
+│   ├── contexts/               # Auth/Chat contexts
+│   ├── lib/                    # Utilities (fetch client, etc.)
+│   └── public/                 # Static assets
 │
-├── backend/                # Python backend
-│   ├── main.py            # FastAPI application entry
-│   ├── config.py          # Configuration management
-│   ├── models.py          # SQLAlchemy models
-│   ├── database.py        # Database connection
-│   ├── auth/              # Authentication logic
-│   │   ├── jwt_handler.py # JWT token management
-│   │   └── password.py    # Password hashing
-│   ├── services/          # Business logic services
-│   │   ├── cache_service.py    # Redis cache manager
-│   │   ├── llm_service.py      # LLM inference
-│   │   └── monitoring_service.py # System metrics
-│   ├── routes/            # API endpoints
-│   │   ├── auth.py        # Authentication routes
-│   │   ├── chat.py        # Chat endpoints
-│   │   ├── history.py     # History management
-│   │   └── admin.py       # Admin routes
-│   └── requirements.txt   # Python dependencies
+├── backend/                    # FastAPI backend
+│   ├── main.py                 # App entrypoint
+│   ├── config.py               # Settings (pydantic BaseSettings)
+│   ├── prompt.txt              # System prompt (optional)
+│   ├── routers/                # API routers (auth, chat, admin)
+│   ├── services/               # Business services (llm, cache, monitoring)
+│   ├── database/               # DB session + SQLAlchemy models
+│   ├── auth/                   # Auth service
+│   ├── utils/                  # Dependencies, prompt builder
+│   ├── schemas/                # Pydantic schemas
+│   └── requirements.txt        # Python dependencies
 │
-├── docker/                # Docker configurations
-│   ├── Dockerfile.backend # Backend multi-stage build
-│   ├── Dockerfile.frontend# Frontend multi-stage build
-│   └── deploy.sh          # Deployment automation script
+├── docker/                     # Docker configurations/scripts
+│   ├── Dockerfile.backend
+│   ├── Dockerfile.frontend
+│   └── deploy.sh
 │
-├── models/                # LLM model files (not in Git, for local dev only)
-│   └── model.gguf         # User-provided GGUF model (~3.5GB for Llama-3-8B)
-│
-├── docker-compose.yml     # Service orchestration
-├── .dockerignore          # Docker build exclusions
-├── .gitignore             # Git exclusions
-├── README.md              # This file
-└── DOCKER_DEPLOYMENT.md   # Detailed deployment guide
+├── models/                     # Local models for dev (not used by Docker build)
+│   └── tinyllama-1.1b-chat-q4.gguf
+├── docker-compose.yml
+└── README.md
 ```
 
 ## API Documentation
@@ -510,26 +498,29 @@ Response:
 ```json
 Request:
 {
-  "message": "Hello, how are you?",
-  "conversation_id": "optional-uuid"
+  "prompt": "Hello, how are you?",
+  "session_id": "optional-uuid"
 }
 
 Response:
 {
   "response": "I'm doing well, thank you! How can I help you?",
-  "conversation_id": "uuid",
+  "session_id": "uuid",
   "timestamp": "2025-11-16T07:30:00Z"
 }
 ```
 
-**WebSocket** `/chat/stream`
+**Streaming (SSE)** `POST /chat/stream`
 ```
-Connect: ws://localhost:8000/chat/stream?token=<jwt-token>
-Send: {"message": "Tell me a story", "conversation_id": "uuid"}
-Receive: {"chunk": "Once ", "done": false}
-Receive: {"chunk": "upon ", "done": false}
+Headers: Authorization: Bearer <jwt-token>
+Body: {"prompt": "Tell me a story", "session_id": "uuid"}
+
+Server responses are streamed as text/event-stream:
+data: {"type":"start","session_id":"...","message_id":"..."}
+data: {"type":"token","content":"Once "}
+data: {"type":"token","content":"upon "}
 ...
-Receive: {"chunk": "", "done": true}
+data: {"type":"done","tokens_used":123,"cached":false,"timestamp":"..."}
 ```
 
 ### Admin
@@ -598,7 +589,7 @@ const nextConfig = {
   output: 'standalone',  // Required for Docker deployment
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
-    NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000',
+    BACKEND_API_URL: process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
   },
 }
 ```
@@ -620,7 +611,7 @@ curl -X POST http://localhost:8000/auth/login \
 curl -X POST http://localhost:8000/chat \
   -H "Authorization: Bearer <your-token>" \
   -H "Content-Type: application/json" \
-  -d '{"message":"What is 2+2?","conversation_id":"test-123"}'
+  -d '{"prompt":"What is 2+2?","session_id":"test-123"}'
 
 # Test frontend
 curl http://localhost:3000/api/health
